@@ -32,6 +32,8 @@ parser.add_argument("--latent_dim", type=int)
 
 args = parser.parse_args()
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 X_raw, _ = load_eeg(args.data_dir)
 print("Raw data shape: {}".format(X_raw.shape))
 
@@ -43,10 +45,13 @@ print("Raw X train shape: {}, X dev shape: {}".format(X_train_raw.shape, X_dev_r
 X_train_sliding = sliding_window(X_train_raw, args.window_size)
 X_dev_sliding = sliding_window(X_dev_raw, args.window_size)
 print("Sliding X train shape: {}, X dev shape: {}".format(X_train_sliding.shape, X_dev_sliding.shape))
-X_train = Variable(torch.Tensor(X_train_sliding), requires_grad=False)
-X_dev = Variable(torch.Tensor(X_dev_sliding), requires_grad=False)
+X_train = Variable(torch.Tensor(X_train_sliding), requires_grad=False).to(device)
+X_dev = Variable(torch.Tensor(X_dev_sliding), requires_grad=False).to(device)
 
-auto_encoder = AutoEncoder(input_dim=X_train.shape[1], hidden_sizes=args.hidden_sizes, latent_dim=args.latent_dim)
+auto_encoder = AutoEncoder(input_dim=X_train.shape[1],
+                           hidden_sizes=args.hidden_sizes,
+                           latent_dim=args.latent_dim
+                           ).to(device)
 print(auto_encoder)
 
 exp_folder = os.path.join(REPO_DIR, "experiments/"+str(datetime.now()))

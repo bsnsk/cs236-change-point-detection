@@ -45,6 +45,9 @@ def train(model, exp_folder, X_train, y_train, X_dev, y_dev,
                         state = model.state_dict()
                         torch.save(state, file_path)
                         print("Best model saved to {}".format(file_path))
+                        # TODO better way to save / visualize summary?
+                        with open(os.path.join(exp_folder, "best_stats.txt"), 'w') as fp:
+                            fp.write("Best dev loss: {}, train loss: {}".format(dev_loss, train_loss))
 
                 pbar.set_postfix(
                     train_loss="{:.2e}".format(train_loss),

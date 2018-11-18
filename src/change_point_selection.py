@@ -5,8 +5,8 @@ import json
 from data_loader import load_eeg, sliding_window
 from autoencoder import AutoEncoder
 from evaluate import draw_roc_threshold
-import matplotlib  # a workaround for virtualenv on maxOS
-matplotlib.use('TkAgg')  # a workaround for virtualenv on maxOS
+import matplotlib  # a workaround for virtualenv on macOS
+matplotlib.use('TkAgg')  # a workaround for virtualenv on macOS
 import matplotlib.pyplot as plt
 
 # directory info

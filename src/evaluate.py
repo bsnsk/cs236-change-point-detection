@@ -1,5 +1,5 @@
-import matplotlib  # a workaround for virtualenv on maxOS
-matplotlib.use('TkAgg')  # a workaround for virtualenv on maxOS
+import matplotlib  # a workaround for virtualenv on macOS
+matplotlib.use('TkAgg')  # a workaround for virtualenv on macOS
 import matplotlib.pyplot as plt
 
 

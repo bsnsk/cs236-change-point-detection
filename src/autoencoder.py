@@ -22,3 +22,6 @@ class AutoEncoder(nn.Module):
         z = self.encoder(x)
         x_hat = self.decoder(z)
         return x_hat
+
+    def encode(self, x):
+        return self.encoder(x)

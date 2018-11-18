@@ -1,8 +1,10 @@
 import arff
 import numpy as np
+from os.path import join
 
-def load_eeg(path):
-    data = np.array(arff.load(open(path, 'r'))['data'])
+def load_eeg(dir):
+    path_under_dir = "EEG/EEG Eye State.arff.txt"
+    data = np.array(arff.load(open(join(dir, path_under_dir), "r"))['data'])
     X = data[:, :-1].astype(np.float)
     Y = data[:, -1].astype(np.int)
     return X, Y

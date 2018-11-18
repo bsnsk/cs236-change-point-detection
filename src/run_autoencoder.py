@@ -18,7 +18,7 @@ parser.add_argument("--data_dir", type=str, help="Data directory")
 
 # Experiments
 parser.add_argument("--iter_max", type=int, default=20000, help="Max training iterations")
-parser.add_argument("--iter_eval", type=int, default=15, help="Evaluate dev set performance every n iterations")
+parser.add_argument("--iter_eval", type=int, default=50, help="Evaluate dev set performance every n iterations")
 
 # Training
 parser.add_argument("--batch_size", type=int, default=500)

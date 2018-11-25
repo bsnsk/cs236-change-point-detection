@@ -6,14 +6,14 @@ from torch.autograd import Variable
 
 from data_loader import *
 from autoencoder import AutoEncoder
-from train import train
+from train import *
 
 REPO_DIR = os.path.relpath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 # Data
-parser.add_argument("--data", choices=["eeg"], default="eeg", help="Which dataset to use")
+parser.add_argument("--data", choices=["eeg", "syn"], default="syn", help="Which dataset to use")
 parser.add_argument("--data_dir", type=str, help="Data directory")
 
 # Experiments
@@ -34,21 +34,32 @@ args = parser.parse_args()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-X_raw, _ = load_eeg(args.data_dir)
-print("Raw data shape: {}".format(X_raw.shape))
+# TODO move this to data_loader
+if args.data == "eeg":
+    X_raw, _ = load_eeg(args.data_dir)
+    print("Raw data shape: {}".format(X_raw.shape))
 
-# TODO Split train/dev/test in prerocess, and think about whether/how to shuffle?
-train_size = int(X_raw.shape[0] * 0.8)
-X_train_raw, X_dev_raw = X_raw[:train_size, :], X_raw[train_size:, :]
-print("Raw X train shape: {}, X dev shape: {}".format(X_train_raw.shape, X_dev_raw.shape))
+    train_size = int(X_raw.shape[0] * 0.8)
+    X_train_raw, X_dev_raw = X_raw[:train_size, :], X_raw[train_size:, :]
+    print("Raw X train shape: {}, X dev shape: {}".format(X_train_raw.shape, X_dev_raw.shape))
 
-X_train_sliding = sliding_window(X_train_raw, args.window_size)
-X_dev_sliding = sliding_window(X_dev_raw, args.window_size)
-print("Sliding X train shape: {}, X dev shape: {}".format(X_train_sliding.shape, X_dev_sliding.shape))
-X_train = Variable(torch.Tensor(X_train_sliding), requires_grad=False).to(device)
-X_dev = Variable(torch.Tensor(X_dev_sliding), requires_grad=False).to(device)
+    X_train_sliding = sliding_window(X_train_raw, args.window_size)
+    X_dev_sliding = sliding_window(X_dev_raw, args.window_size)
+    print("Sliding X train shape: {}, X dev shape: {}".format(X_train_sliding.shape, X_dev_sliding.shape))
+    X_train = Variable(torch.Tensor(X_train_sliding), requires_grad=False).to(device)
+    X_dev = Variable(torch.Tensor(X_dev_sliding), requires_grad=False).to(device)
+    input_dim = X_train.shape[1]
+    y_train, y_dev = None, None
+elif args.data == "syn":
+    X_train, y_train, X_dev, y_dev = load_syn(args.data_dir, args.window_size)
+    input_dim = X_train.shape[1] // 2
+    X_train = Variable(torch.Tensor(X_train), requires_grad=False).to(device)
+    y_train = Variable(torch.Tensor(y_train), requires_grad=False).to(device)
+    X_dev = Variable(torch.Tensor(X_dev), requires_grad=False).to(device)
+    y_dev = Variable(torch.Tensor(y_dev), requires_grad=False).to(device)
+    print("X_train shape: {}, y_train shape: {}".format(X_train.size(), y_train.size()))
 
-auto_encoder = AutoEncoder(input_dim=X_train.shape[1],
+auto_encoder = AutoEncoder(input_dim=input_dim,
                            hidden_sizes=args.hidden_sizes,
                            latent_dim=args.latent_dim
                            ).to(device)
@@ -59,6 +70,6 @@ os.mkdir(exp_folder)
 with open(os.path.join(exp_folder, "args.txt"), "w") as fp:
     fp.write(json.dumps(vars(args)))
 
-train(model=auto_encoder, exp_folder=exp_folder, X_train=X_train, y_train=None, X_dev=X_dev, y_dev=None,
+train_on_new_loss(model=auto_encoder, exp_folder=exp_folder, X_train=X_train, y_train=y_train, X_dev=X_dev, y_dev=y_dev,
       iter_max=args.iter_max, iter_eval=args.iter_eval,
       batch_size=args.batch_size, lr=args.learning_rate, reg=args.reg)

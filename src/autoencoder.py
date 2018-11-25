@@ -25,3 +25,6 @@ class AutoEncoder(nn.Module):
 
     def encode(self, x):
         return self.encoder(x)
+
+    def decode(self, z):
+        return self.decoder(z)

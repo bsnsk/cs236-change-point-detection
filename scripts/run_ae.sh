@@ -5,6 +5,6 @@ python src/run_autoencoder.py   --data_dir "data/raw/" \
                                 --batch_size 500 \
                                 --learning_rate 1e-1 \
                                 --reg 0 \
-                                --window_size 25 \
-                                --hidden_sizes 300 300 \
-                                --latent_dim 200
+                                --window_size 100 \
+                                --hidden_sizes 100 100 \
+                                --latent_dim 100

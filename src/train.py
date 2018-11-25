@@ -5,6 +5,8 @@ from tqdm import tqdm
 from torch import nn, optim
 from sklearn.metrics import roc_auc_score, average_precision_score
 
+import tensorflow as tf
+
 # TODO clean this shit up...
 def train_on_new_loss(model, exp_folder, X_train, y_train, X_dev, y_dev,
                       iter_max, iter_eval,
@@ -12,6 +14,7 @@ def train_on_new_loss(model, exp_folder, X_train, y_train, X_dev, y_dev,
                       ):
     save_dir = os.path.join(exp_folder, "checkpoints")
     os.mkdir(save_dir)
+    summary_writer = tf.summary.FileWriter(exp_folder)
 
     mse = nn.MSELoss()
     ce = nn.BCELoss()
@@ -50,9 +53,15 @@ def train_on_new_loss(model, exp_folder, X_train, y_train, X_dev, y_dev,
                 train_loss.backward()
                 optimizer.step()
                 try:
-                    train_auc = roc_auc_score(y_train_batch.detach().numpy(), probs.detach().numpy())
-                except:
-                    train_auc = 0
+                    y_np, prob_np = y_train_batch.detach().numpy(), probs.detach().numpy()
+                    train_auc = roc_auc_score(y_np, prob_np)
+                    train_auprc = average_precision_score(y_np, prob_np)
+                except:  # TODO the fuck?
+                    train_auc, train_auprc = 0, 0
+                write_summaries(summary_writer, iter, "train", {
+                    "total_loss": train_loss, "rec_loss": train_rec_loss, "ce_loss": train_pred_loss,
+                    "auc": train_auc, "auprc": train_auprc
+                })
 
                 if iter % iter_eval == 0:
                     model.eval()
@@ -61,16 +70,24 @@ def train_on_new_loss(model, exp_folder, X_train, y_train, X_dev, y_dev,
                         X_hat_dev = model.decode(z_dev)
 
                         dev_rec_loss = mse(X_hat_dev, X_dev)
+
                         z_dev_before = z_dev[[i for i in range(z_dev.size()[0]) if i % 2 == 0], :]
                         z_dev_after = z_dev[[i for i in range(z_dev.size()[0]) if i % 2 == 1], :]
                         dev_probs = torch.sigmoid(torch.norm(z_dev_before-z_dev_after, 2, 1, keepdim=True))
                         dev_pred_loss = ce(dev_probs, y_dev)
+
                         dev_loss = dev_rec_loss + dev_pred_loss
                         try:
-                            dev_auc = roc_auc_score(y_dev.detach().numpy(), dev_probs.detach().numpy())
+                            y_dev_np, prob_dev_np = y_dev.detach().numpy(), dev_probs.detach().numpy()
+                            dev_auc = roc_auc_score(y_dev_np, prob_dev_np)
+                            dev_auprc = average_precision_score(y_dev_np, prob_dev_np)
                         except:
-                            dev_auc = 0
+                            dev_auc, dev_auprc = 0, 0
 
+                    write_summaries(summary_writer, iter, "dev", {
+                        "total_loss": dev_loss, "rec_loss": dev_rec_loss, "ce_loss": dev_pred_loss,
+                        "auc": dev_auc, "auprc": dev_auprc
+                    })
                     if dev_auc > best_dev_auc:
                         best_dev_auc = dev_auc
                         file_path = os.path.join(save_dir, "best.pt")
@@ -146,5 +163,12 @@ def train(model, exp_folder, X_train, y_train, X_dev, y_dev,
                 iter += 1
                 pbar.update(1)
 
+def write_summaries(writer, iter, dataset, summaries):
+    for tag, value in summaries.items():
+        write_summary(writer, "{}/{}".format(tag, dataset), value, iter)
 
+def write_summary(writer, tag, value, global_step):
+    summary = tf.Summary()
+    summary.value.add(tag=tag, simple_value =value)
+    writer.add_summary(summary, global_step)
 

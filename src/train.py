@@ -53,7 +53,7 @@ def train_on_new_loss(model, exp_folder, X_train, y_train, X_dev, y_dev,
                 train_loss.backward()
                 optimizer.step()
                 try:
-                    y_np, prob_np = y_train_batch.detach().numpy(), probs.detach().numpy()
+                    y_np, prob_np = y_train_batch.cpu().detach().numpy(), probs.detach().numpy()
                     train_auc = roc_auc_score(y_np, prob_np)
                     train_auprc = average_precision_score(y_np, prob_np)
                 except:  # TODO the fuck?
@@ -78,7 +78,7 @@ def train_on_new_loss(model, exp_folder, X_train, y_train, X_dev, y_dev,
 
                         dev_loss = dev_rec_loss + dev_pred_loss
                         try:
-                            y_dev_np, prob_dev_np = y_dev.detach().numpy(), dev_probs.detach().numpy()
+                            y_dev_np, prob_dev_np = y_dev.cpu().detach().numpy(), dev_probs.detach().numpy()
                             dev_auc = roc_auc_score(y_dev_np, prob_dev_np)
                             dev_auprc = average_precision_score(y_dev_np, prob_dev_np)
                         except:

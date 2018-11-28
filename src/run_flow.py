@@ -62,7 +62,8 @@ elif args.data == "syn":
     print("X_train shape: {}, y_train shape: {}".format(X_train.size(), y_train.size()))
 
 flow_model = NICEModel(input_dim=input_dim,
-                       hidden_sizes=args.hidden_sizes).to(device)
+                       hidden_sizes=args.hidden_sizes,
+                       device=device).to(device)
 print(flow_model)
 
 exp_folder = os.path.join(REPO_DIR, "experiments/FLOW-"+str(datetime.now()))

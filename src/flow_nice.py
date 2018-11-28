@@ -52,25 +52,26 @@ class NICEModel(nn.Module):
         layers.append(nn.Linear(hidden_sizes[-1], num_dims))
         return nn.Sequential(*layers)
 
-    def __init__(self, input_dim, hidden_sizes):
+    def __init__(self, input_dim, hidden_sizes, device):
         super(NICEModel, self).__init__()
         assert(input_dim % 2 == 0)  # an assumption to make life easier
+        self.device = device
         self.dim = input_dim
         self.hidden_sizes = hidden_sizes
 
         self.couplingLayers = [
             AdditiveCouplingLayer(
                 input_dim, 'odd', self._MLPLayers(self.dim // 2, hidden_sizes)
-            ),
+            ).to(device),
             AdditiveCouplingLayer(
                 input_dim, 'even', self._MLPLayers(self.dim // 2, hidden_sizes)
-            ),
+            ).to(device),
             AdditiveCouplingLayer(
                 input_dim, 'odd', self._MLPLayers(self.dim // 2, hidden_sizes)
-            ),
+            ).to(device),
             AdditiveCouplingLayer(
                 input_dim, 'even', self._MLPLayers(self.dim // 2, hidden_sizes)
-            ),
+            ).to(device),
         ]
         self.scalingParameter = nn.Parameter(torch.ones(input_dim))
 

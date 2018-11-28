@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-path = "./data/raw/syn"
+path = "./data/raw/syn/"
 labelFile = path + "label.txt"
 
 

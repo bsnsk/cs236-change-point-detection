@@ -3,7 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 
 class VariationalAutoEncoder(nn.Module):
-    def __init__(self, input_dim, hidden_sizes, latent_dim):
+    def __init__(self, input_dim, hidden_sizes, latent_dim, device):
         super(VariationalAutoEncoder, self).__init__()
         encoder_layers = [nn.Linear(input_dim, hidden_sizes[0]), nn.Sigmoid()]
         decoder_layers = [nn.Linear(hidden_sizes[0], input_dim)]
@@ -23,6 +23,8 @@ class VariationalAutoEncoder(nn.Module):
         self.z_prior_m = torch.nn.Parameter(torch.zeros(1), requires_grad=False)
         self.z_prior_v = torch.nn.Parameter(torch.ones(1), requires_grad=False)
 
+        self.device = device
+
     def encode(self, x):
         h = self.encoder(x)
         m, v = self.gaussian_parameters(h, dim=1)
@@ -37,7 +39,7 @@ class VariationalAutoEncoder(nn.Module):
         return m, v
 
     def sample_gaussian(self, m, v):
-        epsilon = torch.randn(m.shape)
+        epsilon = torch.randn(m.shape).to(self.device)
         z = m + epsilon * torch.sqrt(v)
         return z
 

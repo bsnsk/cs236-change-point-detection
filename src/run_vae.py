@@ -66,7 +66,8 @@ elif args.data == "syn":
 
 vae = VariationalAutoEncoder(input_dim=input_dim,
                            hidden_sizes=args.hidden_sizes,
-                           latent_dim=args.latent_dim
+                           latent_dim=args.latent_dim,
+                           device=device
                            ).to(device)
 print(vae)
 

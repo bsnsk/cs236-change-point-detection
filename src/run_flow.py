@@ -65,7 +65,7 @@ flow_model = NICEModel(input_dim=input_dim,
                        hidden_sizes=args.hidden_sizes).to(device)
 print(flow_model)
 
-exp_folder = os.path.join(REPO_DIR, "experiments/"+str(datetime.now()))
+exp_folder = os.path.join(REPO_DIR, "experiments/FLOW-"+str(datetime.now()))
 os.mkdir(exp_folder)
 with open(os.path.join(exp_folder, "args.txt"), "w") as fp:
     fp.write(json.dumps(vars(args)))

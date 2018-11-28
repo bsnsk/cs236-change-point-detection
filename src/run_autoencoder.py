@@ -65,7 +65,7 @@ auto_encoder = AutoEncoder(input_dim=input_dim,
                            ).to(device)
 print(auto_encoder)
 
-exp_folder = os.path.join(REPO_DIR, "experiments/"+str(datetime.now()))
+exp_folder = os.path.join(REPO_DIR, "experiments/AE-"+str(datetime.now()))
 os.mkdir(exp_folder)
 with open(os.path.join(exp_folder, "args.txt"), "w") as fp:
     fp.write(json.dumps(vars(args)))

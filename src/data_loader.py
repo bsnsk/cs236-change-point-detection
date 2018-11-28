@@ -1,6 +1,7 @@
 import arff
 import numpy as np
 from os.path import join
+from sklearn.preprocessing import MinMaxScaler
 
 def load_eeg(dir):
     path_under_dir = "EEG/EEG Eye State.arff.txt"
@@ -12,7 +13,7 @@ def load_eeg(dir):
 def sliding_window(X, window_size, step_size=1):
     return np.hstack(X[i:1 + i - window_size or None:step_size] for i in range(0, window_size))
 
-def load_syn(dir, window_size):
+def load_syn(dir, window_size, normalize=True):
     path_under_dir = "syn"
     num_total_files = 50
     num_train_files = 45
@@ -43,4 +44,10 @@ def load_syn(dir, window_size):
     y_train = np.vstack(y_train)
     X_dev = np.vstack(X_dev)
     y_dev = np.vstack(y_dev)
+
+    if normalize:
+        scaler = MinMaxScaler(feature_range=(0,1))
+        X_train = scaler.fit(X_train).transform(X_train)
+        X_dev = scaler.fit(X_dev).transform(X_dev)
+
     return X_train, y_train, X_dev, y_dev

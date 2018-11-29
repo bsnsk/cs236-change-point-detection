@@ -63,7 +63,7 @@ def train(model, exp_folder, X_train, y_train, X_dev, y_dev,
                     y_np, prob_np = y_train_batch.cpu().detach().numpy(), y_hat.cpu().detach().numpy()
                     train_auc = roc_auc_score(y_np, prob_np)
                     train_auprc = average_precision_score(y_np, prob_np)
-                except:  # TODO the fuck?
+                except:
                     train_auc, train_auprc = 0, 0
                 write_summaries(summary_writer, iter, "train", {
                     "total_loss": train_loss, "latent_loss": train_latent_loss, "ce_loss": train_pred_loss,

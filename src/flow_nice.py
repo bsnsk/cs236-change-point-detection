@@ -104,3 +104,8 @@ class NICEModel(nn.Module):
             torch.ones(z1.shape).to(self.device))
         pSame = 1 - torch.abs(1 - 2 * gaussian.cdf(z2))
         return 1 - torch.prod(pSame, dim=1, keepdim=True)
+
+    def predict(self, xs):
+        zs = self.forward(xs)
+        probs = self.latentDifferent(zs[0::2], zs[1::2])
+        return probs

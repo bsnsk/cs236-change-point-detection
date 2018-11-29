@@ -119,7 +119,7 @@ with tqdm(total=args.iter_max) as pbar:
             z_before = z_train_batch[[i for i in range(z_train_batch.size()[0]) if i % 2 == 0], :]
             z_after = z_train_batch[[i for i in range(z_train_batch.size()[0]) if i % 2 == 1], :]
             # probs = torch.sigmoid(torch.norm(z_before - z_after, 2, 1, keepdim=True))
-            probs = vae.latentDifferent(z_before, z_after)
+            probs = vae.latentDifferent(z_before, z_after, qv_train)
             train_pred_loss = ce(probs, y_train_batch)
 
             # Total loss & optimize
@@ -157,7 +157,7 @@ with tqdm(total=args.iter_max) as pbar:
                     z_dev_before = z_dev[[i for i in range(z_dev.size()[0]) if i % 2 == 0], :]
                     z_dev_after = z_dev[[i for i in range(z_dev.size()[0]) if i % 2 == 1], :]
                     # dev_probs = torch.sigmoid(torch.norm(z_dev_before - z_dev_after, 2, 1, keepdim=True))
-                    dev_probs = vae.latentDifferent(z_dev_before, z_dev_after)
+                    dev_probs = vae.latentDifferent(z_dev_before, z_dev_after, qv_dev)
                     dev_pred_loss = ce(dev_probs, y_dev)
 
                     # Total loss

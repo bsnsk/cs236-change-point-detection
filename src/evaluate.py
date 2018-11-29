@@ -1,3 +1,4 @@
+from sklearn.metrics import roc_auc_score, average_precision_score
 import matplotlib  # a workaround for virtualenv on macOS
 matplotlib.use('TkAgg')  # a workaround for virtualenv on macOS
 import matplotlib.pyplot as plt
@@ -57,3 +58,14 @@ def draw_roc_threshold(y_hats, ys, dists):
     plt.xlabel("FPR")
     plt.ylabel("TPR")
     plt.savefig("./img/roc.png")
+
+
+def compute_auc(preds, truths):
+    maxv = max(preds + truths)
+    preds = [1 if i in preds else 0 for i in range(maxv + 1)]
+    truths = [1 if i in truths else 0 for i in range(maxv + 1)]
+    print("# preds: {} x {}".format(len(preds), type(preds[0])))
+    print("# truths: {} x {}".format(len(truths), type(truths[0])))
+    auc = roc_auc_score(truths, preds)
+    auprc = average_precision_score(truths, preds)
+    return auc, auprc

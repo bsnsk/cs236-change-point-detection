@@ -2,9 +2,9 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 import json
-from data_loader import load_eeg, sliding_window
+from data_loader import load_eeg_raw, sliding_window
 from autoencoder import AutoEncoder
-from evaluate import draw_roc_threshold
+from evaluate import draw_roc_threshold, compute_auc
 import matplotlib  # a workaround for virtualenv on macOS
 matplotlib.use('TkAgg')  # a workaround for virtualenv on macOS
 import matplotlib.pyplot as plt
@@ -24,7 +24,7 @@ args = json.loads(args_dict)
 device = 'cpu'  # predict on CPU
 
 # load data and obtain latent representations z
-X_raw, y_raw = load_eeg("{}data/raw/".format(base_path))
+X_raw, y_raw = load_eeg_raw("{}data/raw/".format(base_path))
 print("y_raw: {}".format(y_raw.shape))
 X_sliding = sliding_window(X_raw, args["window_size"])
 X_variable = Variable(torch.Tensor(X_sliding), requires_grad=False).to(device)
@@ -108,9 +108,11 @@ def visualize(X_raw, y_raw, indices):
 
 
 indices, dists = find_peaks(z)
-visualize(X_raw, y_raw, indices)
+# visualize(X_raw, y_raw, indices)
 
 print("# dists: {}".format([dists[i] for i in indices]))
 
 truths = [x for x in range(1, y_raw.shape[0]) if y_raw[x] != y_raw[x - 1]]
-draw_roc_threshold(indices, truths, dists)
+# draw_roc_threshold(indices, truths, dists)
+auc, auprc = compute_auc(indices, truths)
+print("AUC = {}, AUPRC = {}".format(auc, auprc))

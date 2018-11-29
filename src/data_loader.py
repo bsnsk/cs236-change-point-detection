@@ -29,11 +29,17 @@ def load_iops(dir, window_size, normalize=True):
 
     return X_train, y_train, X_dev, y_dev
 
-def load_eeg(dir, window_size, normalize=True):
+
+def load_eeg_raw(dir):
     path_under_dir = "EEG/EEG Eye State.arff.txt"
     data = np.array(arff.load(open(join(dir, path_under_dir), "r"))['data'])
     X_raw = data[:, :-1].astype(np.float)
     y_raw = data[:, -1].astype(np.int)
+    return X_raw, y_raw
+
+
+def load_eeg(dir, window_size, normalize=True):
+    X_raw, y_raw = load_eeg_raw(dir)
 
     y_processed = np.zeros(y_raw.shape, dtype=np.int)
     for i in range(1, y_raw.shape[0]):

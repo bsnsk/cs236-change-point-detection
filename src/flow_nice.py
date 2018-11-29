@@ -106,6 +106,6 @@ class NICEModel(nn.Module):
         return 1 - torch.prod(pSame, dim=1, keepdim=True)
 
     def predict(self, xs):
-        zs = self.forward(xs)
+        zs = self.forward(xs.view([-1, xs.shape[1] // 2]))
         probs = self.latentDifferent(zs[0::2], zs[1::2])
         return probs

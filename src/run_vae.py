@@ -80,7 +80,7 @@ save_dir = os.path.join(exp_folder, "checkpoints")
 os.mkdir(save_dir)
 summary_writer = tf.summary.FileWriter(exp_folder)
 
-# mse = nn.MSELoss()
+mse = nn.MSELoss()
 ce_logits = nn.BCEWithLogitsLoss()
 ce = nn.BCELoss()
 
@@ -109,8 +109,9 @@ with tqdm(total=args.iter_max) as pbar:
             z_train_batch = vae.sample_gaussian(qm_train, qv_train)
 
             # NELBO = (-)REC + KL
-            X_hat_logits_batch = vae.decode(z_train_batch)
-            train_rec_loss = -torch.mean(-ce_logits(input=X_hat_logits_batch, target=X_train_batch).sum(-1), 0)
+            X_hat_batch = vae.decode(z_train_batch)
+            # train_rec_loss = -torch.mean(-ce_logits(input=X_hat_logits_batch, target=X_train_batch).sum(-1), 0)
+            train_rec_loss = mse(X_hat_batch, X_train_batch)
             train_kld = torch.mean(vae.kl_normal(qm_train, qv_train, vae.z_prior_m, vae.z_prior_v))
             train_nelbo = train_rec_loss + train_kld
 
@@ -145,8 +146,9 @@ with tqdm(total=args.iter_max) as pbar:
                     z_dev = vae.sample_gaussian(qm_dev, qv_dev)
 
                     # NELBO = (-)REC + KL
-                    X_hat_logits_dev = vae.decode(z_dev)
-                    dev_rec_loss = -torch.mean(-ce_logits(input=X_hat_logits_dev, target=X_dev).sum(-1), 0)
+                    X_hat_dev = vae.decode(z_dev)
+                    # dev_rec_loss = -torch.mean(-ce_logits(input=X_hat_logits_dev, target=X_dev).sum(-1), 0)
+                    dev_rec_loss = mse(X_hat_dev, X_dev)
                     dev_kld = torch.mean(vae.kl_normal(qm_dev, qv_dev, vae.z_prior_m, vae.z_prior_v))
                     dev_nelbo = dev_rec_loss + dev_kld
 

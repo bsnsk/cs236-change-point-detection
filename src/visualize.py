@@ -11,13 +11,15 @@ matplotlib.use('TkAgg')  # a workaround for virtualenv on macOS
 import matplotlib.pyplot as plt
 
 base_path = "./experiments/"
-exp_name = "AE-2018-11-29 09:05:22.816729"  # select experiment
+# exp_name = "FLOW-2018-11-29 06:28:23.099959"  # select experiment
+exp_name = "AE-2018-11-28 00:25:52.158186"  # select experiment
+# exp_name = "AE-2018-11-29 09:05:22.816729"  # select experiment
 data_name = "syn"                             # select data set
 exp_path = "{}{}/".format(base_path, exp_name)
 args_path = "{}args.txt".format(exp_path)
 checkpoint_path = "{}checkpoints/best.pt".format(exp_path)
 
-tau = 150  # TODO: tolerance
+tau = 50  # TODO: tolerance
 
 device = 'cpu'  # predict on CPU
 
@@ -79,7 +81,8 @@ def makePlot(X_raw, Xs, ys, idx=None):
             plt.plot([prefix + i, prefix + i], [truthLB, truthUB],
                      'r--', linewidth='0.5')
 
-    threshold = sorted(y_preds.reshape([-1]))[-100]  # TODO: threshold
+    threshold = 0.8  # TODO: threshold
+    # threshold = sorted(y_preds.reshape([-1]))[-100]  # TODO: threshold
     print("# threshold: %.6lf" % (threshold))
     y_preds = y_preds.reshape([-1])
     for i in range(y_truths.shape[0]):
@@ -98,7 +101,7 @@ def makePlot(X_raw, Xs, ys, idx=None):
             if len(pre) > 1:
                 y_preds[i] = 0
 
-    predLB = max(0, (9 * min_val - max_val) / 8)
+    predLB = (9 * min_val - max_val) / 8
     predUB = (min_val + 2 * max_val) / 3
     print("y_preds: {}".format(y_preds.shape))
     plt.plot([], [], 'c--', label="prediction")
@@ -132,7 +135,7 @@ elif data_name == "syn":
     for i in range(50):
         X_raw, _ = load_one_syn_raw("./data/raw/", i)
         Xs, ys = load_one_syn("./data/raw/", args['window_size'], i)
-        makePlot(X_raw, Xs, ys)
+        makePlot(X_raw, Xs, ys, i)
 else:
     assert(False)
 

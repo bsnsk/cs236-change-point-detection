@@ -143,6 +143,7 @@ elif data_name == "iops":
     ys = np.concatenate((y_train, y_dev))
     Xs = np.concatenate((X_train, X_dev))
     X_raw, _ = load_iops_raw("./data/raw/")
+    print([i for i in range(ys.shape[0]) if ys[i, 0] > 0])
     makePlot(X_raw, Xs, ys)
 else:
     assert(False)

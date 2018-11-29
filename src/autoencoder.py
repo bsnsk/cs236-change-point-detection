@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 
 class AutoEncoder(nn.Module):
@@ -28,3 +29,8 @@ class AutoEncoder(nn.Module):
 
     def decode(self, z):
         return self.decoder(z)
+
+    def predict(self, xs):
+        zs = self.encode(xs.view([-1, xs.shape[1] // 2]))
+        probs = torch.sigmoid(torch.norm(zs[0::2], zs[1::2], 2, 1, keepdim=True))
+        return probs

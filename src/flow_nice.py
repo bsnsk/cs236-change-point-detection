@@ -92,7 +92,8 @@ class NICEModel(nn.Module):
 
     # standard Gaussian as prior
     def logLikelihood(self, z):
-        gaussian = torch.distributions.normal.Normal(torch.zeros(z.shape),
-                                                     torch.ones(z.shape))
+        gaussian = torch.distributions.normal.Normal(
+            torch.zeros(z.shape).to(self.device),
+            torch.ones(z.shape).to(self.device))
         log_prob = torch.sum(gaussian.log_prob(z), dim=-1)
         return log_prob

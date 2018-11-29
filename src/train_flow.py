@@ -47,14 +47,15 @@ def train(model, exp_folder, X_train, y_train, X_dev, y_dev,
                 train_latent_loss = -torch.mean(
                     model.logLikelihood(z_before)
                     + model.logLikelihood(z_after)
-                )
-
+                ) / z_before.shape[-1]  # normalization
 
                 # change point prediction loss
                 y_hat = torch.sigmoid(torch.norm(z_before-z_after, 2, 1, keepdim=True))
                 train_pred_loss = ce(y_hat, y_train_batch)
 
-                train_loss = train_latent_loss + train_pred_loss
+                # combine together with normalization
+                train_loss = train_latent_loss  + train_pred_loss
+
                 train_loss.backward()
                 optimizer.step()
                 try:
@@ -78,7 +79,7 @@ def train(model, exp_folder, X_train, y_train, X_dev, y_dev,
                         dev_latent_loss = -torch.mean(
                             model.logLikelihood(z_dev_before)
                             + model.logLikelihood(z_dev_after)
-                        )
+                        ) / z_dev.shape[-1]   # normalization
 
                         dev_probs = torch.sigmoid(torch.norm(z_dev_before-z_dev_after, 2, 1, keepdim=True))
                         dev_pred_loss = ce(dev_probs, y_dev)

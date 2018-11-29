@@ -5,12 +5,13 @@ from torch.autograd import Variable
 from data_loader import load_eeg, load_syn
 from data_loader import load_eeg_raw
 from flow_nice import NICEModel
+from autoencoder import AutoEncoder
 import matplotlib  # a workaround for virtualenv on macOS
 matplotlib.use('TkAgg')  # a workaround for virtualenv on macOS
 import matplotlib.pyplot as plt
 
 base_path = "./experiments/"
-exp_name = "FLOW-2018-11-29 06:28:23.099959"  # select experiment
+exp_name = "AE-2018-11-29 09:05:22.816729"  # select experiment
 data_name = "eeg"                             # select data set
 exp_path = "{}{}/".format(base_path, exp_name)
 args_path = "{}args.txt".format(exp_path)
@@ -42,6 +43,11 @@ if exp_name.startswith("FLOW"):
     model = NICEModel(input_dim=X_train.shape[1] // 2,
                       hidden_sizes=args['hidden_sizes'],
                       device=device).to(device)
+elif exp_name.startswith("AE"):
+    model = AutoEncoder(input_dim=X_train.shape[1] // 2,
+                        hidden_sizes=args['hidden_sizes'],
+                        latent_dim=args['latent_dim']
+                        ).to(device)
 else:
     assert(False)
 

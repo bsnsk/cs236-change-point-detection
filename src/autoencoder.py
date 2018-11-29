@@ -32,5 +32,5 @@ class AutoEncoder(nn.Module):
 
     def predict(self, xs):
         zs = self.encode(xs.view([-1, xs.shape[1] // 2]))
-        probs = torch.sigmoid(torch.norm(zs[0::2], zs[1::2], 2, 1, keepdim=True))
+        probs = torch.sigmoid(torch.norm(zs[0::2] - zs[1::2], 2, 1, keepdim=True))
         return probs

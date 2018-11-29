@@ -1,5 +1,6 @@
 # NICE
 import os
+import sys
 import json
 import argparse
 from datetime import datetime
@@ -31,6 +32,9 @@ parser.add_argument("--reg", type=float, default=0)
 parser.add_argument("--window_size", type=int)
 parser.add_argument("--hidden_sizes", type=int, nargs="+")
 
+# dry-run
+parser.add_argument("--dry_run", type=bool, default=False, help="load data and build model without training")
+
 args = parser.parse_args()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -41,6 +45,10 @@ flow_model = NICEModel(input_dim=input_dim,
                        hidden_sizes=args.hidden_sizes,
                        device=device).to(device)
 print(flow_model)
+print(args)
+
+if args.dry_run:
+    sys.exit(0)
 
 exp_folder = os.path.join(REPO_DIR, "experiments/FLOW-"+str(datetime.now()))
 os.mkdir(exp_folder)

@@ -7,12 +7,31 @@ from torch.autograd import Variable
 
 data_names = ['eeg', 'syn']
 
-def load_eeg(dir):
+def load_eeg(dir, window_size):
     path_under_dir = "EEG/EEG Eye State.arff.txt"
     data = np.array(arff.load(open(join(dir, path_under_dir), "r"))['data'])
-    X = data[:, :-1].astype(np.float)
-    Y = data[:, -1].astype(np.int)
-    return X, Y
+    X_raw = data[:, :-1].astype(np.float)
+    y_raw = data[:, -1].astype(np.int)
+
+    y_processed = np.zeros(y_raw.shape, dtype=np.int)
+    for i in range(1, y_raw.shape[0]):
+        if y_raw[i] != y_raw[i - 1]:
+            y_processed[i] = 1
+    assert(y_processed.shape == y_raw.shape)
+
+    train_ratio = 0.75
+
+    train_size = int(X_raw.shape[0] * train_ratio)
+    X_train_raw, X_dev_raw = X_raw[:train_size, :], X_raw[train_size:, :]
+    X_train_sliding = sliding_window(X_train_raw, window_size)
+    X_dev_sliding = sliding_window(X_dev_raw, window_size)
+
+    y_train = y_processed[window_size - 1:train_size].reshape([-1, 1])
+    y_dev = y_processed[train_size:-window_size + 1].reshape([-1, 1])
+
+    print("EEG Data: {} 1s in y_trin, {} 1s in y_dev".format(
+        sum(y_train), sum(y_dev)))
+    return X_train_sliding, y_train, X_dev_sliding, y_dev
 
 def sliding_window(X, window_size, step_size=1):
     return np.hstack(X[i:1 + i - window_size or None:step_size] for i in range(0, window_size))
@@ -59,31 +78,23 @@ def load_syn(dir, window_size, normalize=True):
 def load_and_build_tensors(data_name, args, device):
     assert(data_name in data_names)
     if data_name == "eeg":
-        X_raw, _ = load_eeg(args.data_dir)
-        print("Raw data shape: {}".format(X_raw.shape))
-
-        train_size = int(X_raw.shape[0] * 0.8)
-        X_train_raw, X_dev_raw = X_raw[:train_size, :], X_raw[train_size:, :]
-        print("Raw X train shape: {}, X dev shape: {}".format(X_train_raw.shape, X_dev_raw.shape))
-
-        X_train_sliding = sliding_window(X_train_raw, args.window_size)
-        X_dev_sliding = sliding_window(X_dev_raw, args.window_size)
-        print("Sliding X train shape: {}, X dev shape: {}".format(X_train_sliding.shape, X_dev_sliding.shape))
-        X_train = Variable(torch.Tensor(X_train_sliding), requires_grad=False).to(device)
-        X_dev = Variable(torch.Tensor(X_dev_sliding), requires_grad=False).to(device)
-        input_dim = X_train.shape[1]
-        y_train, y_dev = None, None
+        X_train, y_train, X_dev, y_dev = load_eeg(args.data_dir, args.window_size)
     elif data_name == "syn":
         X_train, y_train, X_dev, y_dev = load_syn(args.data_dir, args.window_size)
-        input_dim = X_train.shape[1] // 2
-        X_train = Variable(torch.Tensor(X_train), requires_grad=False).to(device)
-        y_train = Variable(torch.Tensor(y_train), requires_grad=False).to(device)
-        X_dev = Variable(torch.Tensor(X_dev), requires_grad=False).to(device)
-        y_dev = Variable(torch.Tensor(y_dev), requires_grad=False).to(device)
-        print("X_train shape: {}, y_train shape: {}".format(X_train.size(), y_train.size()))
-    return (input_dim, {
+
+    input_dim = X_train.shape[1] // 2
+    X_train = Variable(torch.Tensor(X_train), requires_grad=False).to(device)
+    y_train = Variable(torch.Tensor(y_train), requires_grad=False).to(device)
+    X_dev = Variable(torch.Tensor(X_dev), requires_grad=False).to(device)
+    y_dev = Variable(torch.Tensor(y_dev), requires_grad=False).to(device)
+
+    tensors = {
         "X_train": X_train,
         "y_train": y_train,
         "X_dev": X_dev,
         "y_dev": y_dev,
-    })
+    }
+    for name in tensors:
+        print("Shape of {} is {}".format(
+            name, tensors[name].shape if tensors[name] is not None else None))
+    return (input_dim, tensors)

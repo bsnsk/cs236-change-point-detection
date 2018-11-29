@@ -119,7 +119,6 @@ with tqdm(total=args.iter_max) as pbar:
             z_before = z_train_batch[[i for i in range(z_train_batch.size()[0]) if i % 2 == 0], :]
             z_after = z_train_batch[[i for i in range(z_train_batch.size()[0]) if i % 2 == 1], :]
             # probs = torch.sigmoid(torch.norm(z_before - z_after, 2, 1, keepdim=True))
-            print(qv_train.size(), z_before.size())
             probs = vae.latentDifferent(z_before, z_after, qv_train[0::2])
             train_pred_loss = ce(probs, y_train_batch)
 

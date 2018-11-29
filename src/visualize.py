@@ -4,6 +4,7 @@ import numpy as np
 from torch.autograd import Variable
 from data_loader import load_eeg, load_eeg_raw
 from data_loader import load_one_syn, load_one_syn_raw
+from data_loader import load_iops, load_iops_raw
 from flow_nice import NICEModel
 from autoencoder import AutoEncoder
 import matplotlib  # a workaround for virtualenv on macOS
@@ -12,9 +13,9 @@ import matplotlib.pyplot as plt
 
 base_path = "./experiments/"
 # exp_name = "FLOW-2018-11-29 06:28:23.099959"  # select experiment
-exp_name = "AE-2018-11-28 00:25:52.158186"  # select experiment
+exp_name = "AE-2018-11-29 11:22:40.868366"  # select experiment
 # exp_name = "AE-2018-11-29 09:05:22.816729"  # select experiment
-data_name = "syn"                             # select data set
+data_name = "iops"                             # select data set
 exp_path = "{}{}/".format(base_path, exp_name)
 args_path = "{}args.txt".format(exp_path)
 checkpoint_path = "{}checkpoints/best.pt".format(exp_path)
@@ -136,6 +137,13 @@ elif data_name == "syn":
         X_raw, _ = load_one_syn_raw("./data/raw/", i)
         Xs, ys = load_one_syn("./data/raw/", args['window_size'], i)
         makePlot(X_raw, Xs, ys, i)
+elif data_name == "iops":
+    X_train, y_train, X_dev, y_dev = load_iops(
+        "./data/raw/", args['window_size'])
+    ys = np.concatenate((y_train, y_dev))
+    Xs = np.concatenate((X_train, X_dev))
+    X_raw, _ = load_iops_raw("./data/raw/")
+    makePlot(X_raw, Xs, ys)
 else:
     assert(False)
 

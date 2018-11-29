@@ -7,6 +7,12 @@ from torch.autograd import Variable
 
 data_names = ['eeg', 'syn', "iops"]
 
+def load_iops_raw(dir):
+    path_under_dir = "iops/server_res_eth1out_curve_6.csv"
+    data = np.loadtxt(join(dir, path_under_dir), delimiter=",", skiprows=1)
+    X, y = np.expand_dims(data[:, 1], 1), np.expand_dims(data[:, 2], 1)
+    return X, y
+
 def load_iops(dir, window_size, normalize=True):
     path_under_dir = "iops/server_res_eth1out_curve_6.csv"
     data = np.loadtxt(join(dir, path_under_dir), delimiter=",", skiprows=1)

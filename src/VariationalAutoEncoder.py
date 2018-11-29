@@ -59,3 +59,10 @@ class VariationalAutoEncoder(nn.Module):
         kl = torch.mean(self.kl_normal(qm, qv, self.z_prior_m, self.z_prior_v))
         nelbo = rec + kl
         return nelbo, kl, rec
+
+    def latentDifferent(self, z1, z2):
+        gaussian = torch.distributions.normal.Normal(
+            z1,
+            torch.ones(z1.shape).to(self.device))
+        pSame = 1 - torch.abs(1 - 2 * gaussian.cdf(z2))
+        return 1 - torch.prod(pSame, dim=1, keepdim=True)

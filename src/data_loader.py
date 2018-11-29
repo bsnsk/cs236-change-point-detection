@@ -108,6 +108,40 @@ def load_syn(dir, window_size, normalize=True):
 
     return X_train, y_train, X_dev, y_dev
 
+def load_one_syn_raw(dir, file):
+    path_under_dir = "syn"
+    labels = []
+    with open(join(dir, "{}/label.txt".format(path_under_dir)), "r") as fp:
+        for line in fp.readlines():
+            labels.append([int(num) for num in line.split("[")[1].split("]")[0].split()])
+    X = np.expand_dims(np.loadtxt(join(dir, "{}/{}.txt".format(path_under_dir, file))), 1)
+    return X, None
+
+def load_one_syn(dir, window_size, file, normalize=True):
+    path_under_dir = "syn"
+
+    labels = []
+    with open(join(dir, "{}/label.txt".format(path_under_dir)), "r") as fp:
+        for line in fp.readlines():
+            labels.append([int(num) for num in line.split("[")[1].split("]")[0].split()])
+
+    X = np.expand_dims(np.loadtxt(join(dir, "{}/{}.txt".format(path_under_dir, file))), 1)
+    X = sliding_window(X, window_size=2 * window_size)
+    y = np.zeros((X.shape[0], 1), dtype=np.int)
+
+    label_index = [
+        index - window_size
+        for index in labels[file]
+        if (index - window_size) >= 0 and (index - window_size) < y.shape[0]
+    ]
+    y[label_index] = 1
+
+    if normalize:
+        scaler = MinMaxScaler(feature_range=(0,1))
+        X = scaler.fit(X).transform(X)
+
+    return X, y
+
 def load_and_build_tensors(data_name, args, device):
     assert(data_name in data_names)
     if data_name == "eeg":

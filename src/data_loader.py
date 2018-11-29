@@ -1,7 +1,11 @@
 import arff
 import numpy as np
+import torch
 from os.path import join
 from sklearn.preprocessing import MinMaxScaler
+from torch.autograd import Variable
+
+data_names = ['eeg', 'syn']
 
 def load_eeg(dir):
     path_under_dir = "EEG/EEG Eye State.arff.txt"
@@ -51,3 +55,35 @@ def load_syn(dir, window_size, normalize=True):
         X_dev = scaler.fit(X_dev).transform(X_dev)
 
     return X_train, y_train, X_dev, y_dev
+
+def load_and_build_tensors(data_name, args, device):
+    assert(data_name in data_names)
+    if data_name == "eeg":
+        X_raw, _ = load_eeg(args.data_dir)
+        print("Raw data shape: {}".format(X_raw.shape))
+
+        train_size = int(X_raw.shape[0] * 0.8)
+        X_train_raw, X_dev_raw = X_raw[:train_size, :], X_raw[train_size:, :]
+        print("Raw X train shape: {}, X dev shape: {}".format(X_train_raw.shape, X_dev_raw.shape))
+
+        X_train_sliding = sliding_window(X_train_raw, args.window_size)
+        X_dev_sliding = sliding_window(X_dev_raw, args.window_size)
+        print("Sliding X train shape: {}, X dev shape: {}".format(X_train_sliding.shape, X_dev_sliding.shape))
+        X_train = Variable(torch.Tensor(X_train_sliding), requires_grad=False).to(device)
+        X_dev = Variable(torch.Tensor(X_dev_sliding), requires_grad=False).to(device)
+        input_dim = X_train.shape[1]
+        y_train, y_dev = None, None
+    elif data_name == "syn":
+        X_train, y_train, X_dev, y_dev = load_syn(args.data_dir, args.window_size)
+        input_dim = X_train.shape[1] // 2
+        X_train = Variable(torch.Tensor(X_train), requires_grad=False).to(device)
+        y_train = Variable(torch.Tensor(y_train), requires_grad=False).to(device)
+        X_dev = Variable(torch.Tensor(X_dev), requires_grad=False).to(device)
+        y_dev = Variable(torch.Tensor(y_dev), requires_grad=False).to(device)
+        print("X_train shape: {}, y_train shape: {}".format(X_train.size(), y_train.size()))
+    return (input_dim, {
+        "X_train": X_train,
+        "y_train": y_train,
+        "X_dev": X_dev,
+        "y_dev": y_dev,
+    })

@@ -7,7 +7,7 @@ from torch.autograd import Variable
 
 data_names = ['eeg', 'syn']
 
-def load_eeg(dir, window_size):
+def load_eeg(dir, window_size, normalize=True):
     path_under_dir = "EEG/EEG Eye State.arff.txt"
     data = np.array(arff.load(open(join(dir, path_under_dir), "r"))['data'])
     X_raw = data[:, :-1].astype(np.float)
@@ -23,15 +23,20 @@ def load_eeg(dir, window_size):
 
     train_size = int(X_raw.shape[0] * train_ratio)
     X_train_raw, X_dev_raw = X_raw[:train_size, :], X_raw[train_size:, :]
-    X_train_sliding = sliding_window(X_train_raw, window_size)
-    X_dev_sliding = sliding_window(X_dev_raw, window_size)
+    X_train = sliding_window(X_train_raw, window_size)
+    X_dev = sliding_window(X_dev_raw, window_size)
 
     y_train = y_processed[window_size - 1:train_size].reshape([-1, 1])
     y_dev = y_processed[train_size:-window_size + 1].reshape([-1, 1])
 
     print("EEG Data: {} 1s in y_trin, {} 1s in y_dev".format(
         sum(y_train), sum(y_dev)))
-    return X_train_sliding, y_train, X_dev_sliding, y_dev
+
+    if normalize:
+        scaler = MinMaxScaler(feature_range=(0,1))
+        X_train = scaler.fit(X_train).transform(X_train)
+        X_dev = scaler.fit(X_dev).transform(X_dev)
+    return X_train, y_train, X_dev, y_dev
 
 def sliding_window(X, window_size, step_size=1):
     return np.hstack(X[i:1 + i - window_size or None:step_size] for i in range(0, window_size))

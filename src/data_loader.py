@@ -54,8 +54,8 @@ def load_eeg(dir, window_size, normalize=True):
     X_train = sliding_window(X_train_raw, 2 * window_size)
     X_dev = sliding_window(X_dev_raw, 2 * window_size)
 
-    y_train = y_processed[window_size - 1:train_size].reshape([-1, 1])
-    y_dev = y_processed[train_size:-window_size + 1].reshape([-1, 1])
+    y_train = y_processed[window_size - 1:train_size-window_size].reshape([-1, 1])
+    y_dev = y_processed[train_size+window_size:-window_size + 1].reshape([-1, 1])
 
     print("EEG Data: {} 1's in y_train, {} 1's in y_dev".format(
         sum(y_train), sum(y_dev)))

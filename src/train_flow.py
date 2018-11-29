@@ -50,7 +50,8 @@ def train(model, exp_folder, X_train, y_train, X_dev, y_dev,
                 ) / z_before.shape[-1]  # normalization
 
                 # change point prediction loss
-                y_hat = torch.sigmoid(torch.norm(z_before-z_after, 2, 1, keepdim=True))
+                # y_hat = torch.sigmoid(torch.norm(z_before-z_after, 2, 1, keepdim=True))
+                y_hat = model.latentDifferent(z_before, z_after)
                 train_pred_loss = ce(y_hat, y_train_batch)
 
                 # combine together with normalization
@@ -81,7 +82,8 @@ def train(model, exp_folder, X_train, y_train, X_dev, y_dev,
                             + model.logLikelihood(z_dev_after)
                         ) / z_dev.shape[-1]   # normalization
 
-                        dev_probs = torch.sigmoid(torch.norm(z_dev_before-z_dev_after, 2, 1, keepdim=True))
+                        # dev_probs = torch.sigmoid(torch.norm(z_dev_before-z_dev_after, 2, 1, keepdim=True))
+                        dev_probs = model.latentDifferent(z_dev_before, z_dev_after)
                         dev_pred_loss = ce(dev_probs, y_dev)
 
                         dev_loss = dev_latent_loss + dev_pred_loss

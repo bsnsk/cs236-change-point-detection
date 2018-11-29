@@ -97,3 +97,10 @@ class NICEModel(nn.Module):
             torch.ones(z.shape).to(self.device))
         log_prob = torch.sum(gaussian.log_prob(z), dim=-1)
         return log_prob
+
+    def latentDifferent(self, z1, z2):
+        gaussian = torch.distributions.normal.Normal(
+            z1,
+            torch.ones(z1.shape).to(self.device))
+        pSame = 1 - torch.abs(1 - 2 * gaussian.cdf(z2))
+        return 1 - torch.prod(pSame, dim=1, keepdim=True)

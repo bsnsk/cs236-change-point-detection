@@ -121,7 +121,9 @@ def load_one_syn_raw(dir, file):
         for line in fp.readlines():
             labels.append([int(num) for num in line.split("[")[1].split("]")[0].split()])
     X = np.expand_dims(np.loadtxt(join(dir, "{}/{}.txt".format(path_under_dir, file))), 1)
-    return X, None
+    y = labels[file]
+    y = np.array([1 if i in y else 0 for i in range(X.shape[0])])
+    return X, y
 
 def load_one_syn(dir, window_size, file, normalize=True):
     path_under_dir = "syn"

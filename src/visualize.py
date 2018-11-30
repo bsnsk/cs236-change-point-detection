@@ -16,16 +16,17 @@ import matplotlib.pyplot as plt
 base_path = "./experiments/"
 # exp_name = "FLOW-2018-11-29 10:19:03.279279"  # select experiment Flow syn
 # exp_name = "AE-2018-11-28 00:25:52.158186"  # select experiment AE syn
-exp_name = "VAE-2018-11-29 05:44:01.765073"  # select experiment VAE syn
+# exp_name = "VAE-2018-11-30 00:19:13.923614"  # select experiment VAE syn
+exp_name = "VAE-2018-11-30 00:45:01.031700"  # select experiment VAE eeg
 # exp_name = "FLOW-2018-11-29 06:28:23.099959"  # select experiment Flow eeg
 # exp_name = "AE-2018-11-29 09:05:22.816729"  # select experiment AE eeg
-data_name = "syn"                             # select data set
+data_name = "eeg"                             # select data set
 exp_path = "{}{}/".format(base_path, exp_name)
 args_path = "{}args.txt".format(exp_path)
 checkpoint_path = "{}checkpoints/best.pt".format(exp_path)
 
 tau = 80 if data_name == "syn" else 150  # TODO: tolerance
-threshold = 0.8  # TODO: threshold
+threshold = 0.9999  # TODO: threshold
 
 device = 'cpu'  # predict on CPU
 
@@ -185,13 +186,13 @@ def makePlotsUnified(X_raw, y_truths, preds, idxStr):
                          markersize=3)
         plt.plot([], [], pattern, color=colors[k], label=name)
         k += 1
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=5)
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=3)
     plt.xlabel("time")
     plt.yticks([])
     if data_name == "eeg":
-        plt.ylim((1500, 10000))
+        plt.ylim((1000, 10000))
     elif data_name == "syn":
-        plt.ylim((-50, 70))
+        plt.ylim((-70, 70))
     plt.title("{} data set visualization".format(data_name.upper()))
     plt.savefig("./img/visualization-{}-all{}.eps".format(data_name, idxStr),
                 bbox_inches='tight')
@@ -204,6 +205,8 @@ if len(argv) > 1 and argv[1] == "load":
         idxStr = "-45" if data_name == "syn" else ""
         X_raw = np.load("./log/{}-Xraw{}.npy".format(data_name, idxStr))
         y_truths = np.load("./log/{}-truths{}.npy".format(data_name, idxStr))
+        baseline_preds = np.load("./log/{}-preds-Baseline{}.npy".format(
+            data_name, idxStr))
         flow_preds = np.load("./log/{}-preds-FLOW{}.npy".format(
             data_name, idxStr))
         ae_preds = np.load("./log/{}-preds-AE{}.npy".format(data_name, idxStr))
@@ -211,6 +214,7 @@ if len(argv) > 1 and argv[1] == "load":
             data_name, idxStr))
         makePlotsUnified(X_raw, y_truths, {
             "label": y_truths,
+            "Baseline": baseline_preds,
             "FLOW": flow_preds,
             "AE": ae_preds,
             "VAE": vae_preds,

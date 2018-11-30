@@ -3,6 +3,7 @@ import torch
 from torch.autograd import Variable
 import json
 from data_loader import load_eeg_raw, sliding_window
+from data_loader import load_one_syn_raw
 from autoencoder import AutoEncoder
 from evaluate import draw_roc_threshold, compute_auc
 import matplotlib  # a workaround for virtualenv on macOS
@@ -12,9 +13,14 @@ import matplotlib.pyplot as plt
 # directory info
 # choose different experiment runs by changing exp_path
 base_path = "./"
-exp_path = "{}experiments/2018-11-18 22:11:30.930851/".format(base_path)
+# exp_name = "2018-11-18 22:11:30.930851"  # EEG
+exp_name = "baseline-2018-11-29 23:35:18.669600"  # syn
+exp_path = "{}experiments/{}/".format(base_path, exp_name)
 args_path = "{}args.txt".format(exp_path)
 checkpoint_path = "{}checkpoints/best.pt".format(exp_path)
+
+data_name = "syn"  # TODO: data set
+data_idx = 45
 
 # Load arguments for the model
 with open(args_path, "r") as f:
@@ -24,7 +30,12 @@ args = json.loads(args_dict)
 device = 'cpu'  # predict on CPU
 
 # load data and obtain latent representations z
-X_raw, y_raw = load_eeg_raw("{}data/raw/".format(base_path))
+if data_name == "eeg":
+    X_raw, y_raw = load_eeg_raw("{}data/raw/".format(base_path))
+elif data_name == "syn":
+    X_raw, y_raw = load_one_syn_raw("{}data/raw/".format(base_path), data_idx)
+else:
+    assert(False)
 print("y_raw: {}".format(y_raw.shape))
 X_sliding = sliding_window(X_raw, args["window_size"])
 X_variable = Variable(torch.Tensor(X_sliding), requires_grad=False).to(device)
@@ -108,6 +119,10 @@ def visualize(X_raw, y_raw, indices):
 
 
 indices, dists = find_peaks(z)
+print("# indices: {}".format(indices))
+np.save("./log/{}-preds-{}{}.npy".format(
+    data_name, 'Baseline', '-{}'.format(data_idx) if data_name == "syn" else ""
+), indices)
 # visualize(X_raw, y_raw, indices)
 
 print("# dists: {}".format([dists[i] for i in indices]))

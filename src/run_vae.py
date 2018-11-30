@@ -90,16 +90,16 @@ with tqdm(total=args.iter_max) as pbar:
 
             # NELBO = (-)REC + KL
             X_hat_batch = vae.decode(z_train_batch)
-            # train_rec_loss = -torch.mean(-ce_logits(input=X_hat_logits_batch, target=X_train_batch).sum(-1), 0)
-            train_rec_loss = mse(X_hat_batch, X_train_batch)
+            train_rec_loss = -torch.mean(-ce_logits(input=X_hat_batch, target=X_train_batch).sum(-1), 0)
+            # train_rec_loss = mse(X_hat_batch, X_train_batch)
             train_kld = torch.mean(vae.kl_normal(qm_train, qv_train, vae.z_prior_m, vae.z_prior_v))
             train_nelbo = train_rec_loss + train_kld
 
             # Pred loss
             z_before = z_train_batch[[i for i in range(z_train_batch.size()[0]) if i % 2 == 0], :]
             z_after = z_train_batch[[i for i in range(z_train_batch.size()[0]) if i % 2 == 1], :]
-            # probs = torch.sigmoid(torch.norm(z_before - z_after, 2, 1, keepdim=True))
-            probs = vae.latentDifferent(z_before, z_after, qv_train[0::2])
+            probs = torch.sigmoid(torch.norm(z_before - z_after, 2, 1, keepdim=True))
+            # probs = vae.latentDifferent(z_before, z_after, qv_train[0::2])
             train_pred_loss = ce(probs, y_train_batch)
 
             # Total loss & optimize
@@ -128,16 +128,16 @@ with tqdm(total=args.iter_max) as pbar:
 
                     # NELBO = (-)REC + KL
                     X_hat_dev = vae.decode(z_dev)
-                    # dev_rec_loss = -torch.mean(-ce_logits(input=X_hat_logits_dev, target=X_dev).sum(-1), 0)
-                    dev_rec_loss = mse(X_hat_dev, X_dev)
+                    dev_rec_loss = -torch.mean(-ce_logits(input=X_hat_dev, target=X_dev).sum(-1), 0)
+                    # dev_rec_loss = mse(X_hat_dev, X_dev)
                     dev_kld = torch.mean(vae.kl_normal(qm_dev, qv_dev, vae.z_prior_m, vae.z_prior_v))
                     dev_nelbo = dev_rec_loss + dev_kld
 
                     # Pred loss
                     z_dev_before = z_dev[[i for i in range(z_dev.size()[0]) if i % 2 == 0], :]
                     z_dev_after = z_dev[[i for i in range(z_dev.size()[0]) if i % 2 == 1], :]
-                    # dev_probs = torch.sigmoid(torch.norm(z_dev_before - z_dev_after, 2, 1, keepdim=True))
-                    dev_probs = vae.latentDifferent(z_dev_before, z_dev_after, qv_dev[0::2])
+                    dev_probs = torch.sigmoid(torch.norm(z_dev_before - z_dev_after, 2, 1, keepdim=True))
+                    # dev_probs = vae.latentDifferent(z_dev_before, z_dev_after, qv_dev[0::2])
                     dev_pred_loss = ce(dev_probs, y_dev)
 
                     # Total loss

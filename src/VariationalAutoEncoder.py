@@ -66,3 +66,9 @@ class VariationalAutoEncoder(nn.Module):
             torch.sqrt(qv))
         pSame = 1 - torch.abs(1 - 2 * gaussian.cdf(z2))
         return 1 - torch.prod(pSame, dim=1, keepdim=True)
+
+    def predict(self, xs):
+        qm, qv = self.encode(xs.view(-1, xs.shape[1] // 2))
+        zs = self.sample_gaussian(qm, qv)
+        probs = torch.sigmoid(torch.norm(zs[0::2] - zs[1::2], 2, 1, keepdim=True))
+        return probs

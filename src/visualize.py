@@ -8,13 +8,15 @@ from data_loader import load_one_syn, load_one_syn_raw
 from data_loader import load_iops, load_iops_raw
 from flow_nice import NICEModel
 from autoencoder import AutoEncoder
+from VariationalAutoEncoder import VariationalAutoEncoder
 import matplotlib  # a workaround for virtualenv on macOS
 matplotlib.use('TkAgg')  # a workaround for virtualenv on macOS
 import matplotlib.pyplot as plt
 
 base_path = "./experiments/"
 # exp_name = "FLOW-2018-11-29 10:19:03.279279"  # select experiment Flow syn
-exp_name = "AE-2018-11-28 00:25:52.158186"  # select experiment AE syn
+# exp_name = "AE-2018-11-28 00:25:52.158186"  # select experiment AE syn
+exp_name = "VAE-2018-11-29 05:44:01.765073"  # select experiment VAE syn
 # exp_name = "FLOW-2018-11-29 06:28:23.099959"  # select experiment Flow eeg
 # exp_name = "AE-2018-11-29 09:05:22.816729"  # select experiment AE eeg
 data_name = "syn"                             # select data set
@@ -23,6 +25,7 @@ args_path = "{}args.txt".format(exp_path)
 checkpoint_path = "{}checkpoints/best.pt".format(exp_path)
 
 tau = 80 if data_name == "syn" else 150  # TODO: tolerance
+threshold = 0.8  # TODO: threshold
 
 device = 'cpu'  # predict on CPU
 
@@ -45,6 +48,12 @@ def makePlot(X_raw, Xs, ys, idx=None):
                             hidden_sizes=args['hidden_sizes'],
                             latent_dim=args['latent_dim']
                             ).to(device)
+    elif exp_name.startswith("VAE"):
+        model = VariationalAutoEncoder(input_dim=Xs.shape[1] // 2,
+                                       hidden_sizes=args['hidden_sizes'],
+                                       latent_dim=args['latent_dim'],
+                                       device=device
+                                       ).to(device)
     else:
         assert(False)
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
@@ -85,7 +94,6 @@ def makePlot(X_raw, Xs, ys, idx=None):
             plt.plot([prefix + i, prefix + i], [truthLB, truthUB],
                      'r--', linewidth='0.5')
 
-    threshold = 0.8 if exp_name.split("-")[0] == "AE" else 1.0  # TODO
     print("# threshold: %.6lf" % (threshold))
     y_preds = y_preds.reshape([-1])
     for i in range(y_truths.shape[0]):
@@ -136,7 +144,8 @@ def makePlot(X_raw, Xs, ys, idx=None):
 
 def makePlotsUnified(X_raw, y_truths, preds, idxStr):
     plt.clf()
-    plt.figure(figsize=(4, 8))
+    if data_name == "eeg":
+        plt.figure(figsize=(4, 8))
     min_val = 1e30
     max_val = 0
     colors = [
@@ -176,7 +185,7 @@ def makePlotsUnified(X_raw, y_truths, preds, idxStr):
                          markersize=3)
         plt.plot([], [], pattern, color=colors[k], label=name)
         k += 1
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.08), ncol=5)
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=5)
     plt.xlabel("time")
     plt.yticks([])
     if data_name == "eeg":
@@ -192,16 +201,19 @@ def makePlotsUnified(X_raw, y_truths, preds, idxStr):
 if len(argv) > 1 and argv[1] == "load":
     # load y_preds from files
     if data_name in ["eeg", "syn"]:
-        idxStr = "-46" if data_name == "syn" else ""
+        idxStr = "-45" if data_name == "syn" else ""
         X_raw = np.load("./log/{}-Xraw{}.npy".format(data_name, idxStr))
         y_truths = np.load("./log/{}-truths{}.npy".format(data_name, idxStr))
         flow_preds = np.load("./log/{}-preds-FLOW{}.npy".format(
             data_name, idxStr))
         ae_preds = np.load("./log/{}-preds-AE{}.npy".format(data_name, idxStr))
+        vae_preds = np.load("./log/{}-preds-VAE{}.npy".format(
+            data_name, idxStr))
         makePlotsUnified(X_raw, y_truths, {
             "label": y_truths,
             "FLOW": flow_preds,
             "AE": ae_preds,
+            "VAE": vae_preds,
         }, idxStr)
 else:
     # load model and compute y_preds

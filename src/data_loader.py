@@ -56,8 +56,12 @@ def load_har(path, window_size, normalize=True):
     X_train = sliding_window(X_train_raw, 2 * window_size)
     X_dev = sliding_window(X_dev_raw, 2 * window_size)
 
-    y_train = y_train_raw[window_size - 1:-window_size]
-    y_dev = y_dev_raw[window_size:-window_size + 1]
+    y_train = _y_activity2change_point(
+        y_train_raw[window_size - 1:-window_size]
+    )
+    y_dev = _y_activity2change_point(
+        y_dev_raw[window_size:-window_size + 1]
+    )
 
     if normalize:
         scaler = MinMaxScaler(feature_range=(0, 1))

@@ -13,14 +13,14 @@ import matplotlib.pyplot as plt
 # directory info
 # choose different experiment runs by changing exp_path
 base_path = "./"
-# exp_name = "2018-11-18 22:11:30.930851"  # EEG
-exp_name = "baseline-2018-11-29 23:35:18.669600"  # syn
+exp_name = "2018-11-18 22:11:30.930851"  # EEG
+# exp_name = "baseline-2018-11-29 23:35:18.669600"  # syn
 exp_path = "{}experiments/{}/".format(base_path, exp_name)
 args_path = "{}args.txt".format(exp_path)
 checkpoint_path = "{}checkpoints/best.pt".format(exp_path)
 
-data_name = "syn"  # TODO: data set
-data_idx = 45
+data_name = "eeg"  # TODO: data set
+data_idx = 46
 
 # Load arguments for the model
 with open(args_path, "r") as f:
@@ -56,7 +56,7 @@ def find_peaks(z):
         return sum(xs) * 1. / len(xs)
 
     # inspect width, i.e. for t we inspect [t-d, t+d]
-    d = 80
+    d = 50
     indices = [
         i
         for i in range(d, dists.shape[0] - d)
@@ -119,10 +119,13 @@ def visualize(X_raw, y_raw, indices):
 
 
 indices, dists = find_peaks(z)
+y_preds = np.zeros([y_raw.shape[0], 1])
+for i in indices:
+    y_preds[i + args["window_size"] - 1] = 1.0
 print("# indices: {}".format(indices))
 np.save("./log/{}-preds-{}{}.npy".format(
     data_name, 'Baseline', '-{}'.format(data_idx) if data_name == "syn" else ""
-), indices)
+), y_preds)
 # visualize(X_raw, y_raw, indices)
 
 print("# dists: {}".format([dists[i] for i in indices]))

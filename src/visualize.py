@@ -17,8 +17,8 @@ base_path = "./experiments/"
 # exp_name = "FLOW-2018-11-29 10:19:03.279279"  # select experiment Flow syn
 # exp_name = "AE-2018-11-28 00:25:52.158186"  # select experiment AE syn
 # exp_name = "VAE-2018-11-30 00:19:13.923614"  # select experiment VAE syn
-exp_name = "VAE-2018-11-30 00:45:01.031700"  # select experiment VAE eeg
-# exp_name = "FLOW-2018-11-29 06:28:23.099959"  # select experiment Flow eeg
+# exp_name = "VAE-2018-11-30 00:45:01.031700"  # select experiment VAE eeg
+exp_name = "FLOW-2018-12-08 22:27:39.803812"  # select experiment Flow eeg
 # exp_name = "AE-2018-11-29 09:05:22.816729"  # select experiment AE eeg
 data_name = "eeg"                             # select data set
 exp_path = "{}{}/".format(base_path, exp_name)
@@ -26,7 +26,7 @@ args_path = "{}args.txt".format(exp_path)
 checkpoint_path = "{}checkpoints/best.pt".format(exp_path)
 
 tau = 80 if data_name == "syn" else 150  # TODO: tolerance
-threshold = 0.9999  # TODO: threshold
+threshold = 1.000000  # TODO: threshold
 
 device = 'cpu'  # predict on CPU
 
@@ -86,7 +86,7 @@ def makePlot(X_raw, Xs, ys, idx=None):
         plt.plot(range(X_raw.shape[0]), X_raw, 'b-', label="feature")
         min_val, max_val = min(X_raw), max(X_raw)
 
-    prefix = args['window_size'] - 1
+    prefix = 0  # args['window_size'] - 1
     truthLB = (2 * min_val + max_val) / 3
     truthUB = (- min_val + 9 * max_val) / 8
     plt.plot([], [], 'r--', label="truth")
@@ -202,11 +202,15 @@ def makePlotsUnified(X_raw, y_truths, preds, idxStr):
 if len(argv) > 1 and argv[1] == "load":
     # load y_preds from files
     if data_name in ["eeg", "syn"]:
-        idxStr = "-45" if data_name == "syn" else ""
+        idxStr = "-46" if data_name == "syn" else ""
         X_raw = np.load("./log/{}-Xraw{}.npy".format(data_name, idxStr))
         y_truths = np.load("./log/{}-truths{}.npy".format(data_name, idxStr))
+        print("# X-raw: {}".format(X_raw.shape))
+        print("# y-truth: {}".format(y_truths.shape))
+        assert(X_raw.shape[0] == y_truths.shape[0])
         baseline_preds = np.load("./log/{}-preds-Baseline{}.npy".format(
             data_name, idxStr))
+        print("y truth: {}".format(y_truths.shape))
         flow_preds = np.load("./log/{}-preds-FLOW{}.npy".format(
             data_name, idxStr))
         ae_preds = np.load("./log/{}-preds-AE{}.npy".format(data_name, idxStr))
@@ -224,14 +228,27 @@ else:
     if data_name == "eeg":
         X_train, y_train, X_dev, y_dev = load_eeg(
             "./data/raw/", args['window_size'])
-        ys = np.concatenate((y_train, y_dev))
-        Xs = np.concatenate((X_train, X_dev))
         X_raw, _ = load_eeg_raw("./data/raw/")
+        Xs = np.zeros([X_raw.shape[0], X_train.shape[1]])
+        ys = np.zeros([X_raw.shape[0], 1])
+        diff = args['window_size'] - 1
+        Xs[diff + 1:X_train.shape[0] + diff + 1] = X_train
+        Xs[-diff - X_dev.shape[0]:-diff] = X_dev
+        ys[diff + 1:X_train.shape[0] + diff + 1] = y_train
+        ys[-diff - X_dev.shape[0]:-diff] = y_dev
+        print("# X_raw, Xs, ys: {} {} {}".format(
+            X_raw.shape, Xs.shape, ys.shape))
         makePlot(X_raw, Xs, ys)
     elif data_name == "syn":
         for i in range(50):
             X_raw, _ = load_one_syn_raw("./data/raw/", i)
-            Xs, ys = load_one_syn("./data/raw/", args['window_size'], i)
+            Xs_load, ys_load = load_one_syn(
+                "./data/raw/", args['window_size'], i)
+            diff = (X_raw.shape[0] - Xs_load.shape[0]) // 2
+            Xs = np.zeros([X_raw.shape[0], Xs_load.shape[1]])
+            Xs[diff + 1:-diff] = Xs_load
+            ys = np.zeros([X_raw.shape[0], ys_load.shape[1]])
+            ys[diff + 1:-diff] = ys_load
             makePlot(X_raw, Xs, ys, i)
     elif data_name == "iops":
         X_train, y_train, X_dev, y_dev = load_iops(

@@ -5,13 +5,82 @@ from os.path import join
 from sklearn.preprocessing import MinMaxScaler
 from torch.autograd import Variable
 
-data_names = ['eeg', 'syn', "iops"]
+data_names = ['eeg', 'syn', 'iops', 'har']
+
+
+# WARNING: This only loads the X and y defined by the original data set,
+# which is very different from what we have with sliding window.
+def _load_har_raw(path):
+    har_path = join(path, "har/")
+
+    def loadX(filename):
+        with open(filename, "r") as f:
+            lines = f.readlines()
+        data = [
+            [float(ele) for ele in line.strip().split(" ") if len(ele) > 0]
+            for line in lines
+        ]
+        return np.array(data)
+
+    def loadY(filename):
+        with open(filename, "r") as f:
+            lines = f.readlines()
+        data = [float(line.strip()) for line in lines]
+        return np.array(data)
+
+    X_train = loadX(join(har_path, "train/X_train.txt"))
+    y_train = loadX(join(har_path, "train/y_train.txt"))
+    X_dev = loadX(join(har_path, "test/X_test.txt"))
+    y_dev = loadX(join(har_path, "test/y_test.txt"))
+    return X_train, y_train, X_dev, y_dev
+
+
+def _y_activity2change_point(ys):
+    ys = ys.reshape([-1, 1])
+    ys_processed = np.zeros(ys.shape)
+    for i in range(1, ys.shape[0]):
+        if ys[i, 0] != ys[i-1, 0]:
+            ys_processed[i, 0] = 1
+    return ys_processed
+
+
+def load_har_raw(path):
+    X1, y1, X2, y2 = _load_har_raw(path)
+    Xs = np.concatenate((X1, X2))
+    ys = np.concatenate((y1, y2)).reshape([-1, 1])
+    return Xs, _y_activity2change_point(ys)
+
+
+def load_har(path, window_size, normalize=True):
+    X_train_raw, y_train_raw, X_dev_raw, y_dev_raw = _load_har_raw(path)
+    X_train = sliding_window(X_train_raw, 2 * window_size)
+    X_dev = sliding_window(X_dev_raw, 2 * window_size)
+
+    y_train = _y_activity2change_point(
+        y_train_raw[window_size - 1:-window_size]
+    )
+    y_dev = _y_activity2change_point(
+        y_dev_raw[window_size:-window_size + 1]
+    )
+
+    if normalize:
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        X_train = scaler.fit(X_train).transform(X_train)
+        X_dev = scaler.fit(X_dev).transform(X_dev)
+
+    print("HAR Data: {} 1's in y_train, {} 1's in y_dev".format(
+        sum(y_train), sum(y_dev)))
+    print("# X_train: {}".format(X_train.shape))
+
+    return X_train, y_train, X_dev, y_dev
+
 
 def load_iops_raw(dir):
     path_under_dir = "iops/server_res_eth1out_curve_6.csv"
     data = np.loadtxt(join(dir, path_under_dir), delimiter=",", skiprows=1)
     X, y = np.expand_dims(data[:, 1], 1), np.expand_dims(data[:, 2], 1)
     return X, y
+
 
 def load_iops(dir, window_size, normalize=True):
     path_under_dir = "iops/server_res_eth1out_curve_6.csv"
@@ -121,7 +190,9 @@ def load_one_syn_raw(dir, file):
         for line in fp.readlines():
             labels.append([int(num) for num in line.split("[")[1].split("]")[0].split()])
     X = np.expand_dims(np.loadtxt(join(dir, "{}/{}.txt".format(path_under_dir, file))), 1)
-    return X, None
+    y = labels[file]
+    y = np.array([1 if i in y else 0 for i in range(X.shape[0])])
+    return X, y
 
 def load_one_syn(dir, window_size, file, normalize=True):
     path_under_dir = "syn"
@@ -156,6 +227,10 @@ def load_and_build_tensors(data_name, args, device):
         X_train, y_train, X_dev, y_dev = load_syn(args.data_dir, args.window_size)
     elif data_name == "iops":
         X_train, y_train, X_dev, y_dev = load_iops(args.data_dir, args.window_size)
+    elif data_name == "har":
+        X_train, y_train, X_dev, y_dev = load_har(args.data_dir, args.window_size)
+    else:
+        assert(False)
 
     input_dim = X_train.shape[1] // 2
     X_train = Variable(torch.Tensor(X_train), requires_grad=False).to(device)

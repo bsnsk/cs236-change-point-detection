@@ -40,9 +40,10 @@ X_train, y_train = tensors['X_train'], tensors['y_train']
 X_dev, y_dev = tensors['X_dev'], tensors['y_dev']
 
 # TODO args in
-state_sizes = [100, 100]
-generative = hvae.GenerativeModel(state_sizes, [hvae.build_mlp(100, [100]), hvae.build_mlp(100, [input_dim])])
-recog = hvae.ApproxPosterior(input_dim, [100, 100], state_sizes, 1)
+dim = 50
+state_sizes = [dim, dim]
+generative = hvae.GenerativeModel(state_sizes, [hvae.build_mlp(dim, [dim]), hvae.build_mlp(dim, [input_dim])])
+recog = hvae.ApproxPosterior(input_dim, [dim, dim], state_sizes, 1)
 model = hvae.HVAE(generative, recog).to(device)
 print('Model structure:')
 print(list(model.children()))

@@ -9,7 +9,7 @@ class HVAE(nn.Module):
         super(HVAE, self).__init__()
         self.decoder = generative
         self.encoder = approx_post
-        self.loss_func = nn.BCEWithLogitsLoss(reduction='sum')
+        self.loss_func = nn.BCEWithLogitsLoss(reduction='elementwise_mean')
         self.ce = nn.BCELoss()
 
     def forward(self, x):
@@ -33,12 +33,12 @@ class HVAE(nn.Module):
         sample_size = output.size(1)
         truth = X.unsqueeze(1).expand(-1, sample_size, -1)
         # approximate E_q[p(x|z)]
-        reconst_loss = self.loss_func(output, truth) / sample_size / batch_size
+        reconst_loss = self.loss_func(output, truth) #/ sample_size / batch_size
 
         z_before = samples[[i for i in range(samples.size()[0]) if i % 2 == 0], :]
         z_after = samples[[i for i in range(samples.size()[0]) if i % 2 == 1], :]
         probs = torch.sigmoid(torch.norm(z_before - z_after, 2, 1, keepdim=True))
-        pred_loss = self.ce(probs, y) / batch_size
+        pred_loss = self.ce(probs, y)
 
         try:
             y_np, prob_np = y.cpu().detach().numpy(), probs.cpu().detach().numpy()
@@ -141,7 +141,7 @@ class ApproxPosterior(nn.Module):
     """
 
     def __init__(self, input_dim, mlp_sizes, state_dims, sample_size,
-                 dropout=0.2):
+                 dropout=0):
         super().__init__()
         # TODO: allow length 0 mlp_sizes in a reasonable way
         self.dropout = nn.Dropout(dropout)

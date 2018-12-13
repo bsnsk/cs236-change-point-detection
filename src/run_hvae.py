@@ -5,7 +5,7 @@ import torch
 from tqdm import tqdm
 import tensorflow as tf
 
-from data_loader import load_and_build_tensors
+from data_loader import load_and_build_tensors, data_names
 import hvae
 from train import write_summaries
 
@@ -14,7 +14,7 @@ REPO_DIR = os.path.relpath(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 # Data
-parser.add_argument("--data", choices=["eeg", "syn"], default="syn", help="Which dataset to use")
+parser.add_argument("--data", choices=data_names, default="syn", help="Which dataset to use")
 parser.add_argument("--data_dir", type=str, help="Data directory")
 
 # Experiments

@@ -4,7 +4,7 @@ from datetime import datetime
 import torch
 from torch.autograd import Variable
 
-from data_loader import load_and_build_tensors
+from data_loader import load_and_build_tensors, data_names
 from autoencoder import AutoEncoder
 from train import *
 
@@ -13,7 +13,7 @@ REPO_DIR = os.path.relpath(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 # Data
-parser.add_argument("--data", choices=["syn", "eeg", "iops"], default="syn", help="Which dataset to use")
+parser.add_argument("--data", choices=data_names, default="syn", help="Which dataset to use")
 parser.add_argument("--data_dir", type=str, help="Data directory")
 
 # Experiments

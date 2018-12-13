@@ -4,6 +4,7 @@ from torch.autograd import Variable
 import json
 from data_loader import load_eeg_raw, sliding_window
 from data_loader import load_one_syn_raw
+from data_loader import load_har_raw
 from autoencoder import AutoEncoder
 from evaluate import draw_roc_threshold, compute_auc
 import matplotlib  # a workaround for virtualenv on macOS
@@ -13,13 +14,14 @@ import matplotlib.pyplot as plt
 # directory info
 # choose different experiment runs by changing exp_path
 base_path = "./"
-exp_name = "2018-11-18 22:11:30.930851"  # EEG
+# exp_name = "2018-11-18 22:11:30.930851"  # EEG
 # exp_name = "baseline-2018-11-29 23:35:18.669600"  # syn
+exp_name = "baseline-2018-12-13 01:08:31.902246"  # HAR
 exp_path = "{}experiments/{}/".format(base_path, exp_name)
 args_path = "{}args.txt".format(exp_path)
 checkpoint_path = "{}checkpoints/best.pt".format(exp_path)
 
-data_name = "eeg"  # TODO: data set
+data_name = "har"  # TODO: data set
 data_idx = 46
 
 # Load arguments for the model
@@ -34,6 +36,8 @@ if data_name == "eeg":
     X_raw, y_raw = load_eeg_raw("{}data/raw/".format(base_path))
 elif data_name == "syn":
     X_raw, y_raw = load_one_syn_raw("{}data/raw/".format(base_path), data_idx)
+elif data_name == "har":
+    X_raw, y_raw = load_har_raw("{}data/raw/".format(base_path))
 else:
     assert(False)
 print("y_raw: {}".format(y_raw.shape))
